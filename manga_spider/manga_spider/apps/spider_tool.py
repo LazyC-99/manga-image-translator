@@ -12,6 +12,7 @@ class MangaHubSpider(object):
     BASE_URL = 'https://mangahub.io/'
     IMAGE_DIRECTORY = 'C:/Users/Administrator/Desktop/image/'
     MAX_RETRIES = 5
+    MAX_IMG_GUESSED = 50
 
     def __init__(self):
         self.cur_pop_page = 1
@@ -68,13 +69,27 @@ class MangaHubSpider(object):
     # url: chapters地址
     # word: manga名字
     def get_chapter_img(self, url):
+        img_list = []
         # 使用 requests模块得到响应对象
         html = self.repeat_request(url).text
         parse_html = etree.HTML(html)
-        # 正则解析
-        img_link_list = parse_html.xpath("//div[@id='mangareader']//img/@src")
+        # 解析图片地址模板 尝试获取最新图片
+        # img_url_template: https://imgx.mghubcdn.com/solo-leveling/1/1.jpg
+        img_url_template = parse_html.xpath("//div[@id='mangareader']//img/@src")[0]
+        index = img_url_template.rfind('/')
+        pre = img_url_template[:index + 1]
+        suf = img_url_template[index + 2:]
+        # 直到响应404之前都是有图片的
+        for i in range(1, self.MAX_IMG_GUESSED):
+            img_link = f'{pre}{i}{suf}'
+            response = requests.get(img_link, headers=self.headers, stream=True)
+            if response.status_code == 404:
+                print("下载完成")
+                break
+            else:
+                img_list.append(img_link)
         # 存储图片的url链接
-        return img_link_list
+        return img_list
 
     def down_single_chapter_img(self, url, word):
         # 使用 requests模块得到响应对象
@@ -107,11 +122,14 @@ class MangaHubSpider(object):
     # 下载图片
     def save_image(self, img_link, filename):
         response = requests.get(img_link, headers=self.headers, stream=True)
-        with open(filename, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=1024):
-                if chunk:
-                    f.write(chunk)
-        print(filename, '下载成功')
+        if response.status_code == 404:
+            print("下载完成")
+            return True
+        else:
+            with open(self.IMAGE_DIRECTORY + filename, 'wb') as f:
+                f.write(response.content)
+                print(filename, f'下载成功{filename}')
+                return False
 
     def repeat_request(self, url):
         retries = 0
@@ -123,6 +141,15 @@ class MangaHubSpider(object):
             except requests.RequestException as e:
                 print("repeat...", e)
                 sleep(1)
+
+
+if __name__ == '__main__':
+    spider = MangaHubSpider()
+    imgs = spider.get_chapter_img("https://mangahub.io/chapter/solo-leveling_105/chapter-1")
+    print(imgs)
+    # for i in range(0, 3):
+    #     if spider.save_image(f'https://imgx.mghubcdn.com/solo-leveling/1/{i}.jpg', f'{i}.jpg'):
+    #         break
 
 # if __name__ == '__main__':
 #     spider = MangaHubSpider()
