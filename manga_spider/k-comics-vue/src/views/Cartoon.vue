@@ -4,7 +4,7 @@
       <div class="nav-title">
         <img src="../assets/images/back.png" class="btn" @click="back" />
         <p class="nav-text">{{this.name}}</p>
-        <p class="nav-id">第{{this.id}}话</p>
+        <p class="nav-id">第{{this.chapter_id}}话</p>
       </div>
       <div v-for="(item, i) in imgArr" :key="i" class="photo">
         <img :src="item" alt="" />
@@ -21,7 +21,7 @@ export default {
     return {
       chapter_link: "",
 
-      id: "",
+      chapter_id: "",
 
       name: "",
 

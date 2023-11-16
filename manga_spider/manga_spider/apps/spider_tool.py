@@ -12,7 +12,7 @@ class MangaHubSpider(object):
     BASE_URL = 'https://mangahub.io/'
     IMAGE_DIRECTORY = 'C:/Users/Administrator/Desktop/image/'
     MAX_RETRIES = 5
-    MAX_IMG_GUESSED = 50
+    MAX_IMG_GUESSED = 30
 
     def __init__(self):
         self.cur_pop_page = 1
@@ -82,12 +82,13 @@ class MangaHubSpider(object):
         # 直到响应404之前都是有图片的
         for i in range(1, self.MAX_IMG_GUESSED):
             img_link = f'{pre}{i}{suf}'
-            response = requests.get(img_link, headers=self.headers, stream=True)
-            if response.status_code == 404:
-                print("下载完成")
-                break
-            else:
-                img_list.append(img_link)
+            # response = requests.get(img_link, headers=self.headers, stream=True)
+            # if response.status_code == 404:
+            #     print("下载完成")
+            #     break
+            # else:
+            #     img_list.append(img_link)
+            img_list.append(img_link)
         # 存储图片的url链接
         return img_list
 

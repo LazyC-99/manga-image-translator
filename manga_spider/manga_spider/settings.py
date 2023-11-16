@@ -15,7 +15,6 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
@@ -26,7 +25,6 @@ SECRET_KEY = "django-insecure-3kaetqzf-p*17%%^g0)zii-&3ah!88)o)1%+-32x6x637&l(=z
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
-
 
 # Application definition
 
@@ -44,7 +42,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    'corsheaders.middleware.CorsMiddleware', # 加入中间键 位置必须在这里 不能在其他位置
+    'corsheaders.middleware.CorsMiddleware',  # 加入中间键 位置必须在这里 不能在其他位置
     "django.middleware.common.CommonMiddleware",
     # 'django.middleware.csrf.CsrfViewMiddleware', 如果你的项目没有考虑到 csrf 网络攻击,可注释掉,否则会报错没有传递 csrf cookie
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -72,7 +70,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "manga_spider.wsgi.application"
 
-
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
@@ -82,7 +79,6 @@ DATABASES = {
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -102,7 +98,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
@@ -114,15 +109,16 @@ USE_I18N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
+# 静态资源URL路径
 STATIC_URL = "static/"
-STATICFILES_DIR = [
-    os.path.join(BASE_DIR, 'k-comics-vue/dist'),
-
-]
+# 全局变量名，赋值一个元组
+STATICFILES_DIRS = (
+    # static这个名字和项目下新建的目录static对应，和引用无关
+    os.path.join(BASE_DIR, 'k-comics-vue/dist/static'),
+)
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
