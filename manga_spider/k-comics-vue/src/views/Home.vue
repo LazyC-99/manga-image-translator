@@ -10,7 +10,8 @@
         />
       </van-swipe-item>
     </van-swipe> -->
-
+    <search-box @search="handleSearch" />
+    
     <!-- 推荐 -->
     <div class="cards">
       <div class="cards-box" v-for="(item, index) in reData" :key="index" @click="viewDetail(item.name,item.detail_link)"> 
@@ -42,6 +43,8 @@
 </template>
 
 <script>
+import SearchBox from "@/components/SearchBox.vue";
+import { Toast } from 'vant';
 export default {
   name: "Home",
   data() {
@@ -51,6 +54,9 @@ export default {
       imgSuffix: "@760w_380h.jpg",
       reData: [],
     };
+  },
+  components: {
+    SearchBox,
   },
   created() {
     this.getType();
@@ -68,6 +74,28 @@ export default {
     },
   },
   methods: {
+    handleSearch(searchTerm) {
+      // 处理搜索逻辑
+      this.axios({
+        method: "get",
+        //url: "https://apis.netstart.cn/mbcomic/HomeRecommend?seed=1&drag=1&page_num=1",
+        url: this.$api+"/search",
+        params: {
+          q: searchTerm,
+        },
+      })
+        .then((res) => {
+          console.log("搜索结果 res ==> ", res);
+          //this.reData = res.data.data.list;
+          this.reData = res.data;
+          console.log(this.reData);
+          Toast.success('找到'+this.reData.length+'个');
+        })
+        .catch((err) => {
+          console.log("获取商品类型 err ==> ", err);
+          Toast.fail('错误!');
+        });
+    },
     getType() {
       this.axios({
         method: "get",
@@ -131,9 +159,14 @@ export default {
   // background-color: pink;
 }
 .cards-box img {
-  width: 350px;
-  height: 200px;
+  // width: 350px;
+  // height: 200px;
   border-radius: 10px;
+
+  width: auto;
+	height: auto;
+	max-width: 100%;
+	max-height: 200px;
 }
 .cards-box .title {
   margin: 0;

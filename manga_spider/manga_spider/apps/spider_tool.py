@@ -81,9 +81,10 @@ class MangaHubSpider(object):
         index = img_url_template.rfind('/')
         pre = img_url_template[:index + 1]
         suf = img_url_template[index + 2:]
-        # 直到响应404之前都是有图片的
+
         for i in range(1, self.MAX_IMG_GUESSED):
             img_link = f'{pre}{i}{suf}'
+            # 直到响应404之前都是有图片的
             # response = requests.get(img_link, headers=self.headers, stream=True)
             # if response.status_code == 404:
             #     print("下载完成")
