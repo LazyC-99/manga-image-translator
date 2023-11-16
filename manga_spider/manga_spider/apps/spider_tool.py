@@ -53,7 +53,9 @@ class MangaHubSpider(object):
     def get_manga_chapters(self, url):
         html = self.repeat_request(url).text
         parse_html = etree.HTML(html)
-        url_list = parse_html.xpath("//div[@class='tab-content']//li//a[2]/@href")
+        # 每部分前4话|后面部分
+        url_list = parse_html.xpath("//div[@class='tab-content']//li[position()<=4]//a[1]/@href|//div["
+                                    "@class='tab-content']//li[position()>4]//a[2]/@href")
         chapters_url_list = []
         for chapters in url_list:
             # "https://mangahub.io/chapter/martial-peak/chapter-3596"
@@ -140,7 +142,9 @@ class MangaHubSpider(object):
                 response.raise_for_status()
                 return response
             except requests.RequestException as e:
-                print("repeat...", e)
+                retries += 1
+                print(f"repeat...{retries}", e)
+                retries += 1
                 sleep(1)
 
 
