@@ -5,13 +5,17 @@
         <img src="../assets/images/back.png" class="btn" @click="back" />
         <p class="nav-text">{{this.name}}</p>
         <p class="nav-id">第{{chapter_list[index].chapter_id}}话</p>
+        <van-button @click="toggleTranslate()"  size="small" :type="showTranslate ? 'warning' : 'info'">{{showTranslate ? '关闭翻译' : '开启翻译'}}</van-button>
       </div>
       <div v-for="(item, i) in imgArr" :key="i" class="photo">
         <img :src="item" alt="" />
+        <div v-if="showTranslate" class="overlay">
+          <img :src="item" alt="Overlay Image">
+        </div>
       </div>
       <div class="page">
-        <van-button @click="turnPage(index-=1)" type="default"  size="small">上一章</van-button>
-        <van-button @click="turnPage(index+=1)" type="default"  size="small">下一章</van-button>
+        <van-button @click="turnPage(index-=1)" type="default" >上一章</van-button>
+        <van-button @click="turnPage(index+=1)" type="default" >下一章</van-button>
       </div>
     </div>
   </div>
@@ -24,6 +28,10 @@ export default {
 
   data() {
     return {
+      tranBtnType: "info",
+
+      showTranslate: false,
+
       chapter_list: "",
 
       index: 0,
@@ -54,6 +62,15 @@ export default {
     back() {
       this.$router.back();
     },
+    scrollToTop() {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth" // 添加这个选项可以实现平滑滚动效果
+      });
+    },
+    toggleTranslate() {
+      this.showTranslate = !this.showTranslate
+    },
     turnPage(index){
       console.log("翻页：",index)
       if(index<0){
@@ -62,7 +79,7 @@ export default {
       }else{
         this.index = index
         this.getImgArr()
-        
+        this.scrollToTop()
       }
       
     },
@@ -157,7 +174,7 @@ export default {
           console.log("err ==> ", err);
         });
     },
-  },
+  }
 };
 </script>
 
@@ -199,7 +216,16 @@ export default {
   width:100%;
   img{
     width:100%;
+    position: relative;
   }
+  .overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1; /* 调整这个值以确定覆盖的层级关系 */
+    }
 }
 .page{
   float: right;

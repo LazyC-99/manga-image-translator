@@ -8,6 +8,7 @@ import os
 from urllib import parse
 
 
+
 class MangaHubSpider(object):
     BASE_URL = 'https://mangahub.io/'
     IMAGE_DIRECTORY = 'C:/Users/Administrator/Desktop/image/'
@@ -69,7 +70,6 @@ class MangaHubSpider(object):
 
     # 获取当章节图片
     # url: chapters地址
-    # word: manga名字
     def get_chapter_img(self, url):
         img_list = []
         # 使用 requests模块得到响应对象
@@ -95,24 +95,37 @@ class MangaHubSpider(object):
         # 存储图片的url链接
         return img_list
 
+
+    # 下载单章节图片
+    # url: chapters地址
+    # word: manga名字
     def down_single_chapter_img(self, url, word):
         # 使用 requests模块得到响应对象
         html = self.repeat_request(url).text
         parse_html = etree.HTML(html)
-        # 正则解析
-        img_link_list = parse_html.xpath("//div[@id='mangareader']//img/@src")
-        # 存储图片的url链接
-        print(img_link_list)
-        # 从链接末尾获取章节号
-        chapters = url.split("-")[-1]
-        # 保存路径
-        directory = os.path.join(self.IMAGE_DIRECTORY, word, chapters)
-        os.makedirs(directory, exist_ok=True)
+        # 解析图片地址模板 尝试获取最新图片
+        # img_url_template: https://imgx.mghubcdn.com/solo-leveling/1/1.jpg
+        img_url_template = parse_html.xpath("//div[@id='mangareader']//img/@src")[0]
+        index = img_url_template.rfind('/')
+        chapters = img_url_template.path.split('/')[-2]
+        pre = img_url_template[:index + 1]
+        suf = img_url_template[index + 2:]
 
-        for i, img_link in enumerate(img_link_list, start=1):
-            img_filename = os.path.join(directory, f'{i}.jpg')
-            self.save_image(img_link, img_filename)
-            print(f'已下载 {i}/{len(img_link_list)}')
+        for i in range(1, self.MAX_IMG_GUESSED):
+            img_link = f'{pre}{i}{suf}'
+            # 直到响应404之前都是有图片的
+            response = requests.get(img_link, headers=self.headers, stream=True)
+            if response.status_code == 404:
+                print("下载完成")
+                break
+            else:
+                # 保存路径
+                directory = os.path.join(self.IMAGE_DIRECTORY, word, chapters)
+                os.makedirs(directory, exist_ok=True)
+                img_filename = os.path.join(directory, f'{i}.jpg')
+                self.save_image(img_link, img_filename)
+                print(f'第{chapters}话已下载: {i}张')
+
 
     # 获取全章图片
     # cps: 章节列表
