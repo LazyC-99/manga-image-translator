@@ -4,7 +4,7 @@ module.exports = defineConfig({
   devServer: {
     allowedHosts: [
       'localhost:7890',
-      '8jfahb.natappfree.cc',
+      'n6g45s.natappfree.cc',
     ],
   },
   assetsDir: 'static'

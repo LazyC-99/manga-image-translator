@@ -128,7 +128,6 @@ export default {
     },
     viewDetail(name,detail_link) {
       this.$router.push({ name: "Detail", params: { name,detail_link } });
-      console.log(pid);
     },
   },
 };

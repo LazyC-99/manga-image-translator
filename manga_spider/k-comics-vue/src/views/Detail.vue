@@ -56,7 +56,7 @@
             v-for="(list, index) in sortedList.slice(0, 50)"
             :key="index"
             v-if="index < 50"
-            @click="viewDetail(list.chapter_id, list.chapter_link, title)"
+            @click="viewDetail(index, sortedList, title)"
           >
             <!-- <img
               class="lock"
@@ -71,7 +71,7 @@
             v-for="(list, index) in sortedList.slice(50)"
             :key="index + 50"
             v-if="isShowingMore"
-            @click="viewDetail(list.chapter_id, list.chapter_link, title)"
+            @click="viewDetail(index, sortedList, title)"
           >
             <img
               class="lock"
@@ -265,9 +265,9 @@ export default {
       // );
     },
 
-    viewDetail(chapter_id, chapter_link, name) {
-      console.log("传参",chapter_id, chapter_link, name)
-      this.$router.push({ name: "Cartoon", params: { chapter_id, chapter_link, name } });
+    viewDetail(index, sortedList, name) {
+      console.log("传参",index, sortedList, name)
+      this.$router.push({ name: "Cartoon", params: { index, sortedList, name } });
       // this.$router.push({ name: "Cartoon", params: { id } });
       // this.$router.push({ name: "Cartoon", params: { name } });
       // console.log(cid);
@@ -302,7 +302,7 @@ export default {
         .then((res) => {
           console.log("获取章节详情 res ==> ", res);
           this.detailsData = res.data
-          console.log(this.detailsData)
+          //console.log(this.detailsData)
           // this.detailsData = res.data.data;
           // this.listData = res.data.data.ep_list;
           // console.log(this.detailsData);

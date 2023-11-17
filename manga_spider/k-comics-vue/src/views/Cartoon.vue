@@ -4,24 +4,29 @@
       <div class="nav-title">
         <img src="../assets/images/back.png" class="btn" @click="back" />
         <p class="nav-text">{{this.name}}</p>
-        <p class="nav-id">第{{this.chapter_id}}话</p>
+        <p class="nav-id">第{{chapter_list[index].chapter_id}}话</p>
       </div>
       <div v-for="(item, i) in imgArr" :key="i" class="photo">
         <img :src="item" alt="" />
+      </div>
+      <div class="page">
+        <van-button @click="turnPage(index-=1)" type="default"  size="small">上一章</van-button>
+        <van-button @click="turnPage(index+=1)" type="default"  size="small">下一章</van-button>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import { Toast } from 'vant';
 export default {
   name: "Cartoon",
 
   data() {
     return {
-      chapter_link: "",
+      chapter_list: "",
 
-      chapter_id: "",
+      index: 0,
 
       name: "",
 
@@ -34,12 +39,12 @@ export default {
   },
 
   created() {
-    this.chapter_link = this.$route.params.chapter_link;
-    this.chapter_id = this.$route.params.chapter_id;
-    console.log(this.chapter_id); 
+    this.chapter_list = this.$route.params.sortedList;
+    this.index = this.$route.params.index;
     this.name = this.$route.params.name;
-    console.log(this.name);
     this.getImgArr()
+
+
     // this.getCartoonDetail();
     // this.getImageDetail();
     // this.getData()
@@ -49,20 +54,31 @@ export default {
     back() {
       this.$router.back();
     },
+    turnPage(index){
+      console.log("翻页：",index)
+      if(index<0){
+        Toast.success("前面没有了")
+        this.index = 0
+      }else{
+        this.index = index
+        this.getImgArr()
+        
+      }
+      
+    },
     getImgArr() {
-       
-       console.log("传参数 res ==> ", this.chapter_link);
+      var link = this.chapter_list[this.index].chapter_link
+      console.log("第"+(this.index+1)+"话 chapter?url= ",link );
       this.axios({
         method: "get",
         url: this.$api+"/chapter?",
         params: {
-          url: this.chapter_link,
+          url: link,
         },
       })
         .then((res) => {
           console.log("获图片详情 res ==> ", res);
           this.imgArr = res.data
-          console.log(this.imgArr)
         })
         .catch((err) => {});
     },
@@ -184,5 +200,8 @@ export default {
   img{
     width:100%;
   }
+}
+.page{
+  float: right;
 }
 </style>
