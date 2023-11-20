@@ -9,7 +9,7 @@
       </div>
       <div v-for="(item, i) in imgArr" :key="i" class="photo">
         <img :src="item" alt="" />
-        <div v-if="showTranslate" class="overlay">
+        <div v-if="showTranslate" v-for="(item, i) in tranImgArr" :key="i" class="overlay">
           <img :src="item" alt="Overlay Image">
         </div>
       </div>
@@ -43,6 +43,8 @@ export default {
       ImageData: [],
 
       imgArr:[],
+
+      tranImgArr: [],
     };
   },
 
@@ -82,6 +84,20 @@ export default {
         this.scrollToTop()
       }
       
+    },
+    getTransImgArr(){
+      this.axios({
+        method: "get",
+        url: this.$api+"/trans?",
+        // params: {
+        //   url: link,
+        // },
+      })
+        .then((res) => {
+          console.log("翻译图片详情 res ==> ", res);
+          this.tranImgArr = res.data
+        })
+        .catch((err) => {});
     },
     getImgArr() {
       var link = this.chapter_list[this.index].chapter_link

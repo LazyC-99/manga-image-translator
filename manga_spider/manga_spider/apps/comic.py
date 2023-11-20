@@ -1,3 +1,5 @@
+import os
+
 from django.http import HttpResponse, JsonResponse
 import json
 
@@ -47,3 +49,16 @@ def get_chapters_img(request):
         url = ' '
     chapters = spider.get_chapter_img(url)
     return JsonResponse(chapters, safe=False)
+
+
+def get_trans_img(request):
+    tans_img_list = []
+    # 获取指定目录下的所有文件名
+    MANGA_TRANS_DIR = "C:/Users/Administrator/Desktop/image/"
+    # 基础路径+漫画名+章节数 = 图片路径
+    img_path = os.path.join(MANGA_TRANS_DIR, "tales-translated", "453.6")
+    files = os.listdir(img_path)
+    # 输出所有文件名
+    for file in files:
+        tans_img_list.append(f"static/tales-translated/453.6/{file}")
+    return JsonResponse(tans_img_list, safe=False)

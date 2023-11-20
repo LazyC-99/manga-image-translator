@@ -8,7 +8,6 @@ import os
 from urllib import parse
 
 
-
 class MangaHubSpider(object):
     BASE_URL = 'https://mangahub.io/'
     IMAGE_DIRECTORY = 'C:/Users/Administrator/Desktop/image/'
@@ -95,11 +94,10 @@ class MangaHubSpider(object):
         # 存储图片的url链接
         return img_list
 
-
     # 下载单章节图片
     # url: chapters地址
     # word: manga名字
-    def down_single_chapter_img(self, url, word):
+    def down_single_chapter_img(self, url, name):
         # 使用 requests模块得到响应对象
         html = self.repeat_request(url).text
         parse_html = etree.HTML(html)
@@ -107,7 +105,7 @@ class MangaHubSpider(object):
         # img_url_template: https://imgx.mghubcdn.com/solo-leveling/1/1.jpg
         img_url_template = parse_html.xpath("//div[@id='mangareader']//img/@src")[0]
         index = img_url_template.rfind('/')
-        chapters = img_url_template.path.split('/')[-2]
+        chapter = img_url_template.split('/')[-2]
         pre = img_url_template[:index + 1]
         suf = img_url_template[index + 2:]
 
@@ -120,18 +118,19 @@ class MangaHubSpider(object):
                 break
             else:
                 # 保存路径
-                directory = os.path.join(self.IMAGE_DIRECTORY, word, chapters)
+                directory = os.path.join(self.IMAGE_DIRECTORY, name, chapter)
                 os.makedirs(directory, exist_ok=True)
                 img_filename = os.path.join(directory, f'{i}.jpg')
-                self.save_image(img_link, img_filename)
-                print(f'第{chapters}话已下载: {i}张')
+                with open(img_filename, 'wb') as f:
+                    f.write(response.content)
+                    print(f'第{chapter}话已下载: {i}张')
 
 
     # 获取全章图片
     # cps: 章节列表
     # word: manga名字
     def down_manga(self, manga_item):
-        cps = self.get_manga_chapters(manga_item)
+        cps = self.get_manga_chapters(manga_item["detail_link"])
         name = manga_item["name"]
         for chapter in reversed(cps):
             self.down_single_chapter_img(chapter["chapter_link"], name)
@@ -163,12 +162,18 @@ class MangaHubSpider(object):
 
 
 if __name__ == '__main__':
+
+
+
+
+    # 下载图片
     spider = MangaHubSpider()
-    imgs = spider.get_chapter_img("https://mangahub.io/chapter/solo-leveling_105/chapter-1")
+    chapters = spider.get_manga_chapters("https://mangahub.io/manga/tales-of-demons-and-gods")
+    print(chapters)
+    imgs = spider.get_chapter_img(chapters[0]["chapter_link"])
     print(imgs)
-    # for i in range(0, 3):
-    #     if spider.save_image(f'https://imgx.mghubcdn.com/solo-leveling/1/{i}.jpg', f'{i}.jpg'):
-    #         break
+    spider.down_single_chapter_img(chapters[0]["chapter_link"],"tales")
+
 
 # if __name__ == '__main__':
 #     spider = MangaHubSpider()

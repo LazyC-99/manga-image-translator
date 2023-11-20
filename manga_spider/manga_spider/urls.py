@@ -26,5 +26,6 @@ urlpatterns = [
     path("search/", comic.search),
     path("pop/", comic.pop),
     path("detail/", comic.get_chapters),
-    path("chapter/", comic.get_chapters_img)
+    path("chapter/", comic.get_chapters_img),
+    path("trans/", comic.get_trans_img),
 ]
