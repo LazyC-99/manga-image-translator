@@ -12,10 +12,10 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 from pathlib import Path
 
-MANGA_TRANS_DIR = 'C:/Users/Administrator/Desktop/image/'
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+MANGA_TRANS_DIR = os.path.join('C:/Users/Administrator/Desktop/image/')
+#MANGA_TRANS_DIR = os.path.join(BASE_DIR, 'static/')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -121,7 +121,7 @@ STATICFILES_DIRS = (
     # static这个名字和项目下新建的目录static对应，和引用无关
     os.path.join(BASE_DIR, 'k-comics-vue/dist/static'),
     # 翻译过后的图片地址
-    os.path.join(BASE_DIR, MANGA_TRANS_DIR),
+    MANGA_TRANS_DIR,
 )
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

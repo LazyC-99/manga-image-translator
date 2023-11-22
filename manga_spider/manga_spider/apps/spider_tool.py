@@ -3,9 +3,9 @@ from time import sleep
 import requests
 from fake_useragent import UserAgent
 from lxml import etree
-import random
 import os
-from urllib import parse
+
+from manga_spider.manga_spider.apps import Database
 
 
 class MangaHubSpider(object):
@@ -18,6 +18,7 @@ class MangaHubSpider(object):
         self.cur_pop_page = 1
         self.ua = UserAgent()
         self.headers = {'User-Agent': self.ua.random}
+        self.db = Database.Database()
 
     # 获取manga对象
     def get_manga_list(self, url):
@@ -114,7 +115,8 @@ class MangaHubSpider(object):
             # 直到响应404之前都是有图片的
             response = requests.get(img_link, headers=self.headers, stream=True)
             if response.status_code == 404:
-                print("下载完成")
+                self.db.update_chapter(name, chapter)
+                print(f'第{chapter}话下载完成')
                 break
             else:
                 # 保存路径
@@ -125,15 +127,35 @@ class MangaHubSpider(object):
                     f.write(response.content)
                     print(f'第{chapter}话已下载: {i}张')
 
-
     # 获取全章图片
     # cps: 章节列表
     # word: manga名字
     def down_manga(self, manga_item):
+        comic_db = self.db.select_by_name(manga_item["name"])
+        download = 0
+        if comic_db is None:
+            # 数据库没有  新插入
+            self.db.insert_comic(manga_item)
+
+        else:
+            # 有了 判断需不需要更新
+            # 1.判断latest是否最新
+            # 2.判断download是否最新
+            if comic_db["latest"] == manga_item["latest"]:
+                self.db.update_comic(manga_item)
+
+            if comic_db["download"] == manga_item["latest"]:
+                print(f"{manga_item['name']}已是最新")
+                return
+            else:
+                download = comic_db["download"]
         cps = self.get_manga_chapters(manga_item["detail_link"])
         name = manga_item["name"]
         for chapter in reversed(cps):
-            self.down_single_chapter_img(chapter["chapter_link"], name)
+            if float(chapter["chapter_id"]) > download:
+                self.down_single_chapter_img(chapter["chapter_link"], name)
+            else:
+                print(f"第{chapter['chapter_id']}已下载过")
 
     # 下载图片
     def save_image(self, img_link, filename):
@@ -162,18 +184,11 @@ class MangaHubSpider(object):
 
 
 if __name__ == '__main__':
-
-
-
-
     # 下载图片
     spider = MangaHubSpider()
-    chapters = spider.get_manga_chapters("https://mangahub.io/manga/tales-of-demons-and-gods")
-    print(chapters)
-    imgs = spider.get_chapter_img(chapters[0]["chapter_link"])
-    print(imgs)
-    spider.down_single_chapter_img(chapters[0]["chapter_link"],"tales")
-
+    manga_list = spider.get_pop_manga()
+    print(manga_list[1])
+    spider.down_manga(manga_list[1])
 
 # if __name__ == '__main__':
 #     spider = MangaHubSpider()

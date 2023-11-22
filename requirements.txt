@@ -56,3 +56,4 @@ scipy~=1.10.0
 httpcore~=0.9.1
 httpx~=0.13.3
 pydensecrf~=1.0rc2
+pymysql~=1.1.0

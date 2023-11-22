@@ -9,8 +9,8 @@
       </div>
       <div v-for="(item, i) in imgArr" :key="i" class="photo">
         <img :src="item" alt="" />
-        <div v-if="showTranslate" v-for="(item, i) in tranImgArr" :key="i" class="overlay">
-          <img :src="item" alt="Overlay Image">
+        <div v-if="showTranslate" class="overlay">
+          <img :src="tranImgArr[i]" alt="Overlay Image">
         </div>
       </div>
       <div class="page">
@@ -53,7 +53,7 @@ export default {
     this.index = this.$route.params.index;
     this.name = this.$route.params.name;
     this.getImgArr()
-
+    this.getTransImgArr()
 
     // this.getCartoonDetail();
     // this.getImageDetail();
@@ -94,8 +94,14 @@ export default {
         // },
       })
         .then((res) => {
-          console.log("翻译图片详情 res ==> ", res);
-          this.tranImgArr = res.data
+
+
+          var newArray = res.data.map(function(element) {
+            console.log("翻译图片详情 res ==> ", this.$api);
+              return this.$api + element;
+          });
+          
+          this.tranImgArr = newArray
         })
         .catch((err) => {});
     },
@@ -230,9 +236,9 @@ export default {
   margin-top:0px;
   font-size: 0px;
   width:100%;
+  position: relative;
   img{
     width:100%;
-    position: relative;
   }
   .overlay {
     position: absolute;
