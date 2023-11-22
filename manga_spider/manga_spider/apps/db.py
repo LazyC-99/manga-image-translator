@@ -1,3 +1,5 @@
+import os
+
 import pymysql
 from googletrans import Translator
 
@@ -60,11 +62,11 @@ class Database:
             self.disconnect()
             print(e)
 
-    def select_by_name(self, name):
+    def select_by_name(self, comic_name):
         self.connect()
         try:
             sql = "select * from comic where name = %s"
-            self.cursor.execute(sql, name)  # 执行插入数据
+            self.cursor.execute(sql, comic_name)  # 执行插入数据
             result = self.cursor.fetchall()
             self.connection.commit()
             self.disconnect()
@@ -86,8 +88,17 @@ class Database:
             self.disconnect()
             print(e)
 
+    def update_by_dir(self, path):
+        # 获取指定路径下的所有文件和文件夹
+        entries = os.scandir(path)
+
+        # 筛选出文件夹
+        subfolders = [entry.name for entry in entries if entry.is_dir()]
+
+        return subfolders
+
 
 if __name__ == '__main__':
-    name = Database()
-    by_name = name.select_by_name("Tales of Demons and Gods")
+    db = Database()
+    by_name = db.update_by_dir("C:/Users/Administrator/Desktop/image")
     print(by_name)

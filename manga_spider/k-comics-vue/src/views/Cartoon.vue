@@ -53,7 +53,6 @@ export default {
     this.index = this.$route.params.index;
     this.name = this.$route.params.name;
     this.getImgArr()
-    this.getTransImgArr()
 
     // this.getCartoonDetail();
     // this.getImageDetail();
@@ -85,26 +84,6 @@ export default {
       }
       
     },
-    getTransImgArr(){
-      this.axios({
-        method: "get",
-        url: this.$api+"/trans?",
-        // params: {
-        //   url: link,
-        // },
-      })
-        .then((res) => {
-
-
-          var newArray = res.data.map(function(element) {
-            console.log("翻译图片详情 res ==> ", this.$api);
-              return this.$api + element;
-          });
-          
-          this.tranImgArr = newArray
-        })
-        .catch((err) => {});
-    },
     getImgArr() {
       var link = this.chapter_list[this.index].chapter_link
       console.log("第"+(this.index+1)+"话 chapter?url= ",link );
@@ -116,8 +95,15 @@ export default {
         },
       })
         .then((res) => {
-          console.log("获图片详情 res ==> ", res);
-          this.imgArr = res.data
+          this.imgArr = res.data.imgs
+          console.log("图片详情 res ==> ", this.imgArr);
+          
+          var newArray = res.data.trans_imgs.map(element=> {
+              return this.$api + element;
+          });
+          console.log("翻译详情 res ==> ", newArray);
+          this.tranImgArr = newArray
+          
         })
         .catch((err) => {});
     },

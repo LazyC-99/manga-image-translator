@@ -5,7 +5,9 @@ from fake_useragent import UserAgent
 from lxml import etree
 import os
 
-from manga_spider.manga_spider.apps import Database
+from .db import Database
+
+#from manga_spider.manga_spider.apps import db
 
 
 class MangaHubSpider(object):
@@ -18,7 +20,8 @@ class MangaHubSpider(object):
         self.cur_pop_page = 1
         self.ua = UserAgent()
         self.headers = {'User-Agent': self.ua.random}
-        self.db = Database.Database()
+        #self.db = Database()
+        self.db = Database()
 
     # 获取manga对象
     def get_manga_list(self, url):
@@ -71,19 +74,25 @@ class MangaHubSpider(object):
     # 获取当章节图片
     # url: chapters地址
     def get_chapter_img(self, url):
+        result = {}
         img_list = []
+        trans_list = []
         # 使用 requests模块得到响应对象
         html = self.repeat_request(url).text
         parse_html = etree.HTML(html)
+        name = parse_html.xpath("//div[@id='mangareader']//h3//a/text()")[0]
         # 解析图片地址模板 尝试获取最新图片
         # img_url_template: https://imgx.mghubcdn.com/solo-leveling/1/1.jpg
         img_url_template = parse_html.xpath("//div[@id='mangareader']//img/@src")[0]
         index = img_url_template.rfind('/')
         pre = img_url_template[:index + 1]
         suf = img_url_template[index + 2:]
+        chapter = img_url_template.split('/')[-2]
 
         for i in range(1, self.MAX_IMG_GUESSED):
             img_link = f'{pre}{i}{suf}'
+            name_dir = name.replace(" ", "-")
+            trans_link = f'/static/{name_dir}/{chapter}/{i}{suf}'
             # 直到响应404之前都是有图片的
             # response = requests.get(img_link, headers=self.headers, stream=True)
             # if response.status_code == 404:
@@ -92,8 +101,13 @@ class MangaHubSpider(object):
             # else:
             #     img_list.append(img_link)
             img_list.append(img_link)
+            trans_list.append(trans_link)
+        result = {
+            "imgs": img_list,
+            "trans_imgs": trans_list
+        }
         # 存储图片的url链接
-        return img_list
+        return result
 
     # 下载单章节图片
     # url: chapters地址
@@ -120,7 +134,8 @@ class MangaHubSpider(object):
                 break
             else:
                 # 保存路径
-                directory = os.path.join(self.IMAGE_DIRECTORY, name, chapter)
+                name_dir = name.replace(" ", "-")
+                directory = os.path.join(self.IMAGE_DIRECTORY, name_dir, chapter)
                 os.makedirs(directory, exist_ok=True)
                 img_filename = os.path.join(directory, f'{i}.jpg')
                 with open(img_filename, 'wb') as f:
@@ -131,6 +146,7 @@ class MangaHubSpider(object):
     # cps: 章节列表
     # word: manga名字
     def down_manga(self, manga_item):
+        print(f'开始下载-----------{manga_item}')
         comic_db = self.db.select_by_name(manga_item["name"])
         download = 0
         if comic_db is None:
@@ -179,16 +195,19 @@ class MangaHubSpider(object):
             except requests.RequestException as e:
                 retries += 1
                 print(f"repeat...{retries}", e)
-                retries += 1
                 sleep(1)
 
 
 if __name__ == '__main__':
-    # 下载图片
     spider = MangaHubSpider()
+
     manga_list = spider.get_pop_manga()
-    print(manga_list[1])
     spider.down_manga(manga_list[1])
+
+    # manga_list = spider.get_pop_manga()
+    # chapters = spider.get_manga_chapters(manga_list[1]["detail_link"])
+    # img = spider.get_chapter_img(chapters[0]["chapter_link"])
+    # print(img)
 
 # if __name__ == '__main__':
 #     spider = MangaHubSpider()
