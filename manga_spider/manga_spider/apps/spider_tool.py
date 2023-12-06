@@ -4,8 +4,9 @@ import requests
 from fake_useragent import UserAgent
 from lxml import etree
 import os
+import concurrent.futures
 
-from .db import Database
+from db import Database
 
 #from manga_spider.manga_spider.apps import db
 
@@ -20,8 +21,8 @@ class MangaHubSpider(object):
         self.cur_pop_page = 1
         self.ua = UserAgent()
         self.headers = {'User-Agent': self.ua.random}
-        #self.db = Database()
         self.db = Database()
+        self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
 
     # 获取manga对象
     def get_manga_list(self, url):
@@ -91,7 +92,7 @@ class MangaHubSpider(object):
 
         for i in range(1, self.MAX_IMG_GUESSED):
             img_link = f'{pre}{i}{suf}'
-            name_dir = name.replace(" ", "-")
+            name_dir = name.replace(" ", "-")+"-translated"
             trans_link = f'/static/{name_dir}/{chapter}/{i}{suf}'
             # 直到响应404之前都是有图片的
             # response = requests.get(img_link, headers=self.headers, stream=True)
@@ -129,6 +130,7 @@ class MangaHubSpider(object):
             # 直到响应404之前都是有图片的
             response = requests.get(img_link, headers=self.headers, stream=True)
             if response.status_code == 404:
+                # TODO 多线程下保证最新章节正确
                 self.db.update_chapter(name, chapter)
                 print(f'第{chapter}话下载完成')
                 break
@@ -167,11 +169,19 @@ class MangaHubSpider(object):
                 download = comic_db["download"]
         cps = self.get_manga_chapters(manga_item["detail_link"])
         name = manga_item["name"]
-        for chapter in reversed(cps):
-            if float(chapter["chapter_id"]) > download:
-                self.down_single_chapter_img(chapter["chapter_link"], name)
-            else:
-                print(f"第{chapter['chapter_id']}已下载过")
+        # 创建一个任务列表
+        download_tasks = []
+        # 创建线程池任务
+        with self.executor as executor:
+            for chapter in reversed(cps):
+                if float(chapter["chapter_id"]) > download:
+                    # 使用 submit 方法将任务提交给线程池
+                    task = executor.submit(self.down_single_chapter_img, chapter["chapter_link"], name)
+                    download_tasks.append(task)
+                else:
+                    print(f"第{chapter['chapter_id']}已下载过")
+            # 等待所有下载任务完成
+            concurrent.futures.wait(download_tasks)
 
     # 下载图片
     def save_image(self, img_link, filename):
@@ -198,39 +208,48 @@ class MangaHubSpider(object):
                 sleep(1)
 
 
-if __name__ == '__main__':
-    spider = MangaHubSpider()
-
-    manga_list = spider.get_pop_manga()
-    spider.down_manga(manga_list[1])
+# if __name__ == '__main__':
+#     spider = MangaHubSpider()
+#
+#     manga_list = spider.get_pop_manga()
+#     spider.down_manga(manga_list[1])
 
     # manga_list = spider.get_pop_manga()
     # chapters = spider.get_manga_chapters(manga_list[1]["detail_link"])
     # img = spider.get_chapter_img(chapters[0]["chapter_link"])
     # print(img)
 
-# if __name__ == '__main__':
-#     spider = MangaHubSpider()
-#     while 1:
-#         choose = int(input("1.pop manga 2.search manga 0.exit"))
-#         if choose == 1:
-#             manga_list = spider.get_pop_manga()
-#             for i, manga in enumerate(manga_list, start=1):
-#                 print(f'{i}.{manga["name"]}')
-#             choose = int(input("choose manga:"))
-#             manga = manga_list[choose - 1]
-#             print(manga)
-#             while 1:
-#                 down = int(input("1.download 2.cancel"))
-#                 if down == 1:
-#                     spider.down_manga(manga)
-#                 if down == 2:
-#                     break
-#
-#         if choose == 2:
-#             keyword = input("input key words:").strip()
-#             manga_list = spider.search_manga(keyword)
-#             for i, manga in enumerate(manga_list, start=1):
-#                 print(f'{i}.{manga["name"]}')
-#         if choose == 0:
-#             break
+if __name__ == '__main__':
+    spider = MangaHubSpider()
+    while 1:
+        choose = int(input("1.pop manga 2.search manga 0.exit"))
+        if choose == 1:
+            manga_list = spider.get_pop_manga()
+            for i, manga in enumerate(manga_list, start=1):
+                print(f'{i}.{manga["name"]}')
+            choose = int(input("choose manga:"))
+            manga = manga_list[choose - 1]
+            print(manga)
+            while 1:
+                down = int(input("1.download 2.cancel"))
+                if down == 1:
+                    spider.down_manga(manga)
+                if down == 2:
+                    break
+
+        if choose == 2:
+            keyword = input("input key words:").strip()
+            manga_list = spider.search_manga(keyword)
+            for i, manga in enumerate(manga_list, start=1):
+                print(f'{i}.{manga["name"]}')
+            choose = int(input("choose manga:"))
+            manga = manga_list[choose - 1]
+            print(manga)
+            while 1:
+                down = int(input("1.download 2.cancel"))
+                if down == 1:
+                    spider.down_manga(manga)
+                if down == 2:
+                    break
+        if choose == 0:
+            break

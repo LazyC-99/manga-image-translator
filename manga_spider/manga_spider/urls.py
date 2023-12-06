@@ -18,14 +18,15 @@ from django.contrib import admin
 from django.urls import path
 from django.views.generic import TemplateView
 
-from .apps import comic
+from .apps import views
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path('', TemplateView.as_view(template_name='index.html')),
-    path("search/", comic.search),
-    path("pop/", comic.pop),
-    path("detail/", comic.get_chapters),
-    path("chapter/", comic.get_chapters_img),
-    path("trans/", comic.get_trans_img),
+    path("search/", views.search),
+    path("pop/", views.pop),
+    path("detail/", views.get_chapters),
+    path("chapter/", views.get_chapters_img),
+    path("trans/", views.get_trans_img),
+    path("apptest/", views.get_trans_img),
 ]
