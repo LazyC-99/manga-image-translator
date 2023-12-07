@@ -5,7 +5,7 @@ from googletrans import Translator
 
 
 class Database:
-    def __init__(self, host="127.0.0.1", user="root", password="root", database="comic"):
+    def __init__(self, host="127.0.0.1", user="root", password="", database="comic"):
         self.host = host
         self.user = user
         self.password = password
