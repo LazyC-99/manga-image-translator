@@ -92,8 +92,11 @@ class MangaHubSpider(object):
         chapter = img_url_template.split('/')[-2]
 
         for i in range(1, self.MAX_IMG_GUESSED):
+            # 组装原网站图片路径
             img_link = f'{pre}{i}{suf}'
+            # 替换掉空格 否则访问不到
             name_dir = name.replace(" ", "-") + "-translated"
+            # 组装翻译图片路径 static为setting中设置的翻译图片根目录路径
             trans_link = f'/static/{name_dir}/{chapter}/{i}{suf}'
             # 直到响应404之前都是有图片的
             # response = requests.get(img_link, headers=self.headers, stream=True)
@@ -136,7 +139,7 @@ class MangaHubSpider(object):
                 print(f'第{chapter}话下载完成')
                 break
             else:
-                # 保存路径
+                # 保存路径 替换掉空格
                 name_dir = name.replace(" ", "-")
                 directory = os.path.join(self.IMAGE_DIRECTORY, name_dir, chapter)
                 os.makedirs(directory, exist_ok=True)
@@ -150,6 +153,7 @@ class MangaHubSpider(object):
     # word: manga名字
     def down_manga(self, item):
         print(f'开始下载-----------{item}')
+        # 查询数据库是否下载过
         comic_db = Manga.objects.filter(name=item["name"]).first()
         download = 0
         if comic_db is None:

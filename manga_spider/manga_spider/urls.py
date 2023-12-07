@@ -25,6 +25,7 @@ urlpatterns = [
     path('', TemplateView.as_view(template_name='index.html')),
     path("search/", views.search),
     path("pop/", views.pop),
+    path("translatable/", views.translatable),
     path("detail/", views.get_chapters),
     path("chapter/", views.get_chapters_img),
     path("trans/", views.get_trans_img),

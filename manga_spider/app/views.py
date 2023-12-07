@@ -1,10 +1,12 @@
+import json
 import os
 
+from django.core.serializers import serialize
 from django.http import HttpResponse, JsonResponse
-import json
+from django.core import serializers
 from django.conf import settings
 from django.shortcuts import render
-
+from .models import Manga
 from . import spider_tool
 
 spider = spider_tool.MangaHubSpider()
@@ -29,6 +31,21 @@ def pop(request):
     request.encoding = 'utf-8'
     search_list = spider.get_pop_manga()
     return JsonResponse(search_list, safe=False)
+
+
+def translatable(request):
+    manga_list = Manga.objects.all()
+    result = []
+    for manga in manga_list:
+        item = {'name': manga.trans_name,
+                'detail_link': manga.detail_link,
+                'img': manga.cover_img,
+                'latest': manga.latest,
+                'status': manga.status,
+                'styles': manga.styles,
+                }
+        result.append(item)
+    return JsonResponse(result, safe=False)
 
 
 def get_chapters(request):
