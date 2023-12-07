@@ -2,13 +2,15 @@ from time import sleep
 
 import requests
 from fake_useragent import UserAgent
+from googletrans import Translator
 from lxml import etree
 import os
 import concurrent.futures
 
-from db import Database
+from .models import Manga
 
-#from manga_spider.manga_spider.apps import db
+
+# from manga_spider.manga_spider.apps import db
 
 
 class MangaHubSpider(object):
@@ -21,7 +23,6 @@ class MangaHubSpider(object):
         self.cur_pop_page = 1
         self.ua = UserAgent()
         self.headers = {'User-Agent': self.ua.random}
-        self.db = Database()
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
 
     # 获取manga对象
@@ -35,7 +36,7 @@ class MangaHubSpider(object):
                 item = {'name': div.xpath(".//h4[@class=\'media-heading\']/a/text()")[0],
                         'detail_link': div.xpath(".//div[@class=\'media-left\']/a/@href")[0],
                         'img': div.xpath(".//div[@class=\'media-left\']/a/img/@src")[0],
-                        'latest': div.xpath(".//div[@class=\'media-body\']/span/a/text()")[1],
+                        'latest': float(div.xpath(".//div[@class=\'media-body\']/span/a/text()")[1]),
                         'status': div.xpath(".//div[@class=\'media-body\']/span/text()")[2],
                         'styles': div.xpath(".//div[@class=\'media-body\']/p/a/text()"),
                         }
@@ -91,16 +92,13 @@ class MangaHubSpider(object):
         chapter = img_url_template.split('/')[-2]
 
         for i in range(1, self.MAX_IMG_GUESSED):
+            # 组装原网站图片路径
             img_link = f'{pre}{i}{suf}'
-            name_dir = name.replace(" ", "-")+"-translated"
+            # 替换掉空格 否则访问不到
+            name_dir = name.replace(" ", "-") + "-translated"
+            # 组装翻译图片路径 static为setting中设置的翻译图片根目录路径
             trans_link = f'/static/{name_dir}/{chapter}/{i}{suf}'
-            # 直到响应404之前都是有图片的
-            # response = requests.get(img_link, headers=self.headers, stream=True)
-            # if response.status_code == 404:
-            #     print("下载完成")
-            #     break
-            # else:
-            #     img_list.append(img_link)
+            # 获取MAX_IMG_GUESSED张图片，直到响应404之前都是有图片的
             img_list.append(img_link)
             trans_list.append(trans_link)
         result = {
@@ -131,11 +129,11 @@ class MangaHubSpider(object):
             response = requests.get(img_link, headers=self.headers, stream=True)
             if response.status_code == 404:
                 # TODO 多线程下保证最新章节正确
-                self.db.update_chapter(name, chapter)
+                Manga.objects.filter(name=name).update(download=chapter)
                 print(f'第{chapter}话下载完成')
                 break
             else:
-                # 保存路径
+                # 保存路径 替换掉空格
                 name_dir = name.replace(" ", "-")
                 directory = os.path.join(self.IMAGE_DIRECTORY, name_dir, chapter)
                 os.makedirs(directory, exist_ok=True)
@@ -147,34 +145,40 @@ class MangaHubSpider(object):
     # 获取全章图片
     # cps: 章节列表
     # word: manga名字
-    def down_manga(self, manga_item):
-        print(f'开始下载-----------{manga_item}')
-        comic_db = self.db.select_by_name(manga_item["name"])
+    def down_manga(self, item):
+        print(f'开始下载-----------{item}')
+        # 查询数据库是否下载过
+        comic_db = Manga.objects.filter(name=item["name"]).first()
         download = 0
         if comic_db is None:
             # 数据库没有  新插入
-            self.db.insert_comic(manga_item)
+            # 翻译漫画名
+            translator = Translator()
+            translation = translator.translate(item['name'], dest='zh-cn').text
+            Manga.objects.create(name=item['name'], trans_name=translation, detail_link=item['detail_link'],
+                                 cover_img=item['img'],
+                                 latest=item['latest'], status=item['status'], styles=', '.join(item['styles']))
 
         else:
             # 有了 判断需不需要更新
             # 1.判断latest是否最新
             # 2.判断download是否最新
-            if comic_db["latest"] == manga_item["latest"]:
-                self.db.update_comic(manga_item)
+            if comic_db.latest == item["latest"]:
+                Manga.objects.filter(name=item["name"]).update(latest=item["latest"])
 
-            if comic_db["download"] == manga_item["latest"]:
-                print(f"{manga_item['name']}已是最新")
+            if comic_db.download == item["latest"]:
+                print(f"{item['name']}已是最新")
                 return
             else:
-                download = comic_db["download"]
-        cps = self.get_manga_chapters(manga_item["detail_link"])
-        name = manga_item["name"]
+                download = comic_db.download
+        cps = self.get_manga_chapters(item["detail_link"])
+        name = item["name"]
         # 创建一个任务列表
         download_tasks = []
         # 创建线程池任务
         with self.executor as executor:
             for chapter in reversed(cps):
-                if float(chapter["chapter_id"]) > download:
+                if float(chapter["chapter_id"]) > float(download):
                     # 使用 submit 方法将任务提交给线程池
                     task = executor.submit(self.down_single_chapter_img, chapter["chapter_link"], name)
                     download_tasks.append(task)
@@ -214,42 +218,7 @@ class MangaHubSpider(object):
 #     manga_list = spider.get_pop_manga()
 #     spider.down_manga(manga_list[1])
 
-    # manga_list = spider.get_pop_manga()
-    # chapters = spider.get_manga_chapters(manga_list[1]["detail_link"])
-    # img = spider.get_chapter_img(chapters[0]["chapter_link"])
-    # print(img)
-
-if __name__ == '__main__':
-    spider = MangaHubSpider()
-    while 1:
-        choose = int(input("1.pop manga 2.search manga 0.exit"))
-        if choose == 1:
-            manga_list = spider.get_pop_manga()
-            for i, manga in enumerate(manga_list, start=1):
-                print(f'{i}.{manga["name"]}')
-            choose = int(input("choose manga:"))
-            manga = manga_list[choose - 1]
-            print(manga)
-            while 1:
-                down = int(input("1.download 2.cancel"))
-                if down == 1:
-                    spider.down_manga(manga)
-                if down == 2:
-                    break
-
-        if choose == 2:
-            keyword = input("input key words:").strip()
-            manga_list = spider.search_manga(keyword)
-            for i, manga in enumerate(manga_list, start=1):
-                print(f'{i}.{manga["name"]}')
-            choose = int(input("choose manga:"))
-            manga = manga_list[choose - 1]
-            print(manga)
-            while 1:
-                down = int(input("1.download 2.cancel"))
-                if down == 1:
-                    spider.down_manga(manga)
-                if down == 2:
-                    break
-        if choose == 0:
-            break
+# manga_list = spider.get_pop_manga()
+# chapters = spider.get_manga_chapters(manga_list[1]["detail_link"])
+# img = spider.get_chapter_img(chapters[0]["chapter_link"])
+# print(img)
