@@ -1,6 +1,30 @@
 from django.test import TestCase
 
 from app.spider_tool import MangaHubSpider
+import subprocess
+
+
+class Translator(TestCase):
+    # 指定要执行的Python程序文件
+    python_program = "manga_translator"
+
+    # 定义命令行参数
+    args = [
+        "-v",
+        "--translator=google",
+        "-l", "CHS",
+        "-m", "batch",
+        "--use-cuda",
+        "--detector", "ctd",
+        "-i", r"C:\Users\Administrator\Desktop\image\test"
+    ]
+
+    # 使用 subprocess.run 调用，并捕获输出
+    result = subprocess.run(["python", "-m", python_program] + args, capture_output=True)
+
+    # 获取标准输出结果
+    output = result.stdout.decode("utf-8")
+    print("Output:", output)
 
 
 # 爬虫程序

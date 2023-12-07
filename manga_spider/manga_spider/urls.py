@@ -28,6 +28,4 @@ urlpatterns = [
     path("translatable/", views.translatable),
     path("detail/", views.get_chapters),
     path("chapter/", views.get_chapters_img),
-    path("trans/", views.get_trans_img),
-    path("apptest/", views.get_trans_img),
 ]

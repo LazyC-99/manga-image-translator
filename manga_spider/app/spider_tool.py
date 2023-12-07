@@ -98,13 +98,7 @@ class MangaHubSpider(object):
             name_dir = name.replace(" ", "-") + "-translated"
             # 组装翻译图片路径 static为setting中设置的翻译图片根目录路径
             trans_link = f'/static/{name_dir}/{chapter}/{i}{suf}'
-            # 直到响应404之前都是有图片的
-            # response = requests.get(img_link, headers=self.headers, stream=True)
-            # if response.status_code == 404:
-            #     print("下载完成")
-            #     break
-            # else:
-            #     img_list.append(img_link)
+            # 获取MAX_IMG_GUESSED张图片，直到响应404之前都是有图片的
             img_list.append(img_link)
             trans_list.append(trans_link)
         result = {
