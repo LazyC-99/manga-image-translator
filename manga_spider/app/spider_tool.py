@@ -10,9 +10,6 @@ import concurrent.futures
 from .models import Manga
 
 
-# from manga_spider.manga_spider.apps import db
-
-
 class MangaHubSpider(object):
     BASE_URL = 'https://mangahub.io/'
     IMAGE_DIRECTORY = 'C:/Users/Administrator/Desktop/image/'
@@ -31,14 +28,23 @@ class MangaHubSpider(object):
         parse_html = etree.HTML(html)
         item_div_list = parse_html.xpath("//div[@class='row']/div")
         pop_list = []
+
+        # 查询数据库是否有
+        translatable_set = set()
+        names = Manga.objects.all().values('name')
+        for entry in names:
+            name_value = entry['name']
+            translatable_set.add(name_value)
         try:
             for div in item_div_list:
-                item = {'name': div.xpath(".//h4[@class=\'media-heading\']/a/text()")[0],
+                scrape_name = div.xpath(".//h4[@class=\'media-heading\']/a/text()")[0]
+                item = {'name': scrape_name,
                         'detail_link': div.xpath(".//div[@class=\'media-left\']/a/@href")[0],
                         'img': div.xpath(".//div[@class=\'media-left\']/a/img/@src")[0],
                         'latest': float(div.xpath(".//div[@class=\'media-body\']/span/a/text()")[1]),
                         'status': div.xpath(".//div[@class=\'media-body\']/span/text()")[2],
-                        'styles': div.xpath(".//div[@class=\'media-body\']/p/a/text()"),
+                        'genres': div.xpath(".//div[@class=\'media-body\']/p/a/text()"),
+                        'translatable': scrape_name in translatable_set
                         }
                 pop_list.append(item)
         finally:
@@ -157,7 +163,7 @@ class MangaHubSpider(object):
             translation = translator.translate(item['name'], dest='zh-cn').text
             Manga.objects.create(name=item['name'], trans_name=translation, detail_link=item['detail_link'],
                                  cover_img=item['img'],
-                                 latest=item['latest'], status=item['status'], styles=', '.join(item['styles']))
+                                 latest=item['latest'], status=item['status'], genres=', '.join(item['genres']))
 
         else:
             # 有了 判断需不需要更新
@@ -210,7 +216,6 @@ class MangaHubSpider(object):
                 retries += 1
                 print(f"repeat...{retries}", e)
                 sleep(1)
-
 
 # if __name__ == '__main__':
 #     spider = MangaHubSpider()

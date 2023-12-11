@@ -1,10 +1,12 @@
 from django.test import TestCase
 
+from app.models import Genres
 from app.spider_tool import MangaHubSpider
 import subprocess
+from googletrans import Translator
 
 
-class Translator(TestCase):
+class CallTranslator(TestCase):
     # 指定要执行的Python程序文件
     python_program = "manga_translator"
 
@@ -62,3 +64,32 @@ class Spider(TestCase):
                     break
         if choose == 0:
             break
+
+
+class ImportGenres(TestCase):
+    # 手动获取:https://mangahub.io/search
+    # xpath: //ul[@class='dropdown-menu dropdown-menu-right']//li//text()
+    genres_list = [
+        "Action", "Adventure", "Comedy", "Adult", "Drama", "Historical", "Martial Arts",
+        "Romance", "Ecchi", "Supernatural", "Webtoons", "Manhwa", "Fantasy", "Harem",
+        "Shounen", "Manhua", "Mature", "Seinen", "Sports", "School Life", "Smut",
+        "Mystery", "Psychological", "Shounen ai", "Slice of life", "Shoujo ai",
+        "Cooking", "Horror", "Tragedy", "Doujinshi", "Sci-Fi", "Yuri", "Yaoi", "Shoujo",
+        "Gender bender", "Josei", "Mecha", "Medical", "Magic", "4-Koma", "Music",
+        "Webtoon", "Isekai", "Game", "Award Winning", "Oneshot", "Demons", "Military",
+        "Police", "Super Power", "Food", "Kids", "Magical Girls", "Wuxia", "Superhero",
+        "Thriller", "Crime", "Philosophical", "Adaptation", "Full Color", "Crossdressing",
+        "Reincarnation", "Manga", "Cartoon", "Survival", "Comic", "English", "Harlequin",
+        "Time Travel", "Traditional Games", "Reverse Harem", "Animals", "Aliens", "Loli",
+        "Video Games", "Monsters", "Office Workers", "System", "Villainess", "Zombies",
+        "Vampires", "Violence", "Monster Girls", "Anthology", "Ghosts", "Delinquents",
+        "Post-Apocalyptic", "Xianxia", "Xuanhuan", "R-18", "Cultivation", "Rebirth",
+        "Gore", "Russian", "Samurai", "Ninja", "Revenge", "Cheat Systems", "Dungeons",
+        "Overpowered"
+    ]
+
+    for genre_name in genres_list:
+        translator = Translator()
+        genre_name = genre_name.replace(' ', '-')
+        translation = translator.translate(genre_name, dest='zh-cn').text
+        genre = Genres.objects.create(name=genre_name, trans_name=translation)

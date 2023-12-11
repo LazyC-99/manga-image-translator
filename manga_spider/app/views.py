@@ -1,6 +1,6 @@
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
-from .models import Manga
+from .models import Manga, Genres
 from . import spider_tool
 
 spider = spider_tool.MangaHubSpider()
@@ -36,7 +36,7 @@ def translatable(request):
                 'img': manga.cover_img,
                 'latest': manga.latest,
                 'status': manga.status,
-                'styles': manga.styles,
+                'genres': manga.genres,
                 }
         result.append(item)
     return JsonResponse(result, safe=False)
@@ -62,6 +62,17 @@ def get_chapters_img(request):
     return JsonResponse(chapters, safe=False)
 
 
-def exe_trans(request):
+def genres(request):
+    genres_list = Genres.objects.all()
+    result = []
+    for genre in genres_list:
+        item = {
+            'name': genre.name,
+            'trans_name': genre.trans_name
+        }
+        result.append(item)
+    return JsonResponse(result, safe=False)
 
+
+def exe_trans(request):
     return JsonResponse("")
