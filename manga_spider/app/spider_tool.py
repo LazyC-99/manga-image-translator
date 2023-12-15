@@ -56,8 +56,8 @@ class MangaHubSpider(object):
         return self.get_manga_list(pop_url)
 
     # 搜索
-    def search_manga(self, manga_name):
-        search_url = f'{self.BASE_URL}search?order=POPULAR&genre=all&q={manga_name}'
+    def search_manga(self, order, genre, manga_name):
+        search_url = f'{self.BASE_URL}search?order={order}&genre={genre}&q={manga_name}'
         return self.get_manga_list(search_url)
 
     # 获取章节和地址

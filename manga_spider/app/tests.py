@@ -1,12 +1,54 @@
 from django.test import TestCase
 
-from app.models import Genres
+from app.models import Genres, Order
 from app.spider_tool import MangaHubSpider
 import subprocess
 from googletrans import Translator
 
 
-class CallTranslator(TestCase):
+def ImportGenres():
+    # 手动获取:https://mangahub.io/search
+    # xpath: //ul[@class='dropdown-menu dropdown-menu-right']//li//text()
+    genres_list = [
+        "Action", "Adventure", "Comedy", "Adult", "Drama", "Historical", "Martial Arts",
+        "Romance", "Ecchi", "Supernatural", "Webtoons", "Manhwa", "Fantasy", "Harem",
+        "Shounen", "Manhua", "Mature", "Seinen", "Sports", "School Life", "Smut",
+        "Mystery", "Psychological", "Shounen ai", "Slice of life", "Shoujo ai",
+        "Cooking", "Horror", "Tragedy", "Doujinshi", "Sci-Fi", "Yuri", "Yaoi", "Shoujo",
+        "Gender bender", "Josei", "Mecha", "Medical", "Magic", "4-Koma", "Music",
+        "Webtoon", "Isekai", "Game", "Award Winning", "Oneshot", "Demons", "Military",
+        "Police", "Super Power", "Food", "Kids", "Magical Girls", "Wuxia", "Superhero",
+        "Thriller", "Crime", "Philosophical", "Adaptation", "Full Color", "Crossdressing",
+        "Reincarnation", "Manga", "Cartoon", "Survival", "Comic", "English", "Harlequin",
+        "Time Travel", "Traditional Games", "Reverse Harem", "Animals", "Aliens", "Loli",
+        "Video Games", "Monsters", "Office Workers", "System", "Villainess", "Zombies",
+        "Vampires", "Violence", "Monster Girls", "Anthology", "Ghosts", "Delinquents",
+        "Post-Apocalyptic", "Xianxia", "Xuanhuan", "R-18", "Cultivation", "Rebirth",
+        "Gore", "Russian", "Samurai", "Ninja", "Revenge", "Cheat Systems", "Dungeons",
+        "Overpowered"
+    ]
+
+    order_list = [
+        "POPULAR", "LATEST", "ALPHABET", "NEW", "COMPLETED"
+    ]
+    translator = Translator()
+
+    Genres.objects.all().delete()
+    for index, genre_name in enumerate(genres_list):
+        genre_name = genre_name.replace(' ', '-')
+        # TODO 多线程翻译
+        translation = translator.translate(genre_name, dest='zh-cn').text
+        Genres.objects.create(id=index + 1, name=genre_name, trans_name=translation)
+        print(f'insert genres:{index + 1}/{len(genres_list)}')
+
+    Order.objects.all().delete()
+    for index, order_name in enumerate(order_list):
+        translation = translator.translate(order_name, dest='zh-cn').text
+        Order.objects.create(id=index + 1, name=order_name, trans_name=translation)
+        print(f'insert order:{index + 1}/{len(order_list)}')
+
+
+def CallTranslator():
     # 指定要执行的Python程序文件
     python_program = "manga_translator"
 
@@ -30,7 +72,7 @@ class CallTranslator(TestCase):
 
 
 # 爬虫程序
-class Spider(TestCase):
+def Spider():
     spider = MangaHubSpider()
     while 1:
         choose = int(input("1.pop manga 2.search manga 0.exit"))
@@ -66,30 +108,5 @@ class Spider(TestCase):
             break
 
 
-class ImportGenres(TestCase):
-    # 手动获取:https://mangahub.io/search
-    # xpath: //ul[@class='dropdown-menu dropdown-menu-right']//li//text()
-    genres_list = [
-        "Action", "Adventure", "Comedy", "Adult", "Drama", "Historical", "Martial Arts",
-        "Romance", "Ecchi", "Supernatural", "Webtoons", "Manhwa", "Fantasy", "Harem",
-        "Shounen", "Manhua", "Mature", "Seinen", "Sports", "School Life", "Smut",
-        "Mystery", "Psychological", "Shounen ai", "Slice of life", "Shoujo ai",
-        "Cooking", "Horror", "Tragedy", "Doujinshi", "Sci-Fi", "Yuri", "Yaoi", "Shoujo",
-        "Gender bender", "Josei", "Mecha", "Medical", "Magic", "4-Koma", "Music",
-        "Webtoon", "Isekai", "Game", "Award Winning", "Oneshot", "Demons", "Military",
-        "Police", "Super Power", "Food", "Kids", "Magical Girls", "Wuxia", "Superhero",
-        "Thriller", "Crime", "Philosophical", "Adaptation", "Full Color", "Crossdressing",
-        "Reincarnation", "Manga", "Cartoon", "Survival", "Comic", "English", "Harlequin",
-        "Time Travel", "Traditional Games", "Reverse Harem", "Animals", "Aliens", "Loli",
-        "Video Games", "Monsters", "Office Workers", "System", "Villainess", "Zombies",
-        "Vampires", "Violence", "Monster Girls", "Anthology", "Ghosts", "Delinquents",
-        "Post-Apocalyptic", "Xianxia", "Xuanhuan", "R-18", "Cultivation", "Rebirth",
-        "Gore", "Russian", "Samurai", "Ninja", "Revenge", "Cheat Systems", "Dungeons",
-        "Overpowered"
-    ]
-
-    for genre_name in genres_list:
-        translator = Translator()
-        genre_name = genre_name.replace(' ', '-')
-        translation = translator.translate(genre_name, dest='zh-cn').text
-        genre = Genres.objects.create(name=genre_name, trans_name=translation)
+class Test(TestCase):
+    ImportGenres()

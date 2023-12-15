@@ -17,10 +17,10 @@
             class="classify-label"
             v-for="(style, index) in stylesData"
             :key="index"
-            @click="highlight1(index + 1, style.id)"
+            @click="highlight1(index + 1, style.name)"
             :class="{ active: currentIndex === index + 1 }"
           >
-            {{ style.name }}
+            {{ style.trans_name }}
           </div>
         </div>
         <!-- 地区 -->
@@ -97,10 +97,10 @@
             class="classify-label"
             v-for="(order, index) in ordersData"
             :key="index"
-            @click="highlight5(index + 1, order.id)"
+            @click="highlight5(index + 1, order.name)"
             :class="{ active: ordersIndex === index + 1 }"
           >
-            {{ order.name }}
+            {{ order.trans_name }}
           </div>
         </div>
         <!-- 筛选 -->
@@ -110,13 +110,13 @@
     <div class="list-data">
       <div class="list-item" v-for="(item, index) in imageData" :key="index" @click="viewDetail(item.season_id)">
         <img
-          :src="`https://images.weserv.nl/?url=${item.vertical_cover}${imgSuffix}`"
+          :src="item.img"
           alt=""
         />
-        <div class="list-title">{{ item.title }}</div>
+        <div class="list-title">{{ item.name }}</div>
         <div class="list-info">
-          {{ item.isfinish == 1 ? "[完结] 共" : "[更新] 至"
-          }}{{ item.total }} 话
+          {{ item.isfinish == '(Completed)' ? "[完结] 共" : "[更新] 至"
+          }}{{ item.latest }} 话
         </div>
       </div>
     </div>
@@ -142,10 +142,10 @@ export default {
       ordersIndex: 0,
       areasIndex: 0,
       obj: {
-        style_id: -1,
+        genres: 'all',
         area_id: -1,
         is_finish: -1,
-        order: 0,
+        order: 'POPULAR',
         is_free: -1,
       },
     };
@@ -191,16 +191,16 @@ export default {
     getType() {
       this.axios({
         method: "get",
-        url: "https://apis.netstart.cn/mbcomic/AllLabel",
+        url: this.$api+"/classify",
       })
 
         .then((res) => {
           console.log("获取分类筛选条件 res ==> ", res);
-          this.stylesData = res.data.data.styles;
-          this.ordersData = res.data.data.orders;
-          this.pricesData = res.data.data.prices;
-          this.statusData = res.data.data.status;
-          this.areasData = res.data.data.areas;
+          this.stylesData = res.data.genres;
+          this.ordersData = res.data.orders;
+          // this.pricesData = res.data.data.prices;
+          // this.statusData = res.data.data.status;
+          // this.areasData = res.data.data.areas;
           // console.log(this.stylesData);
         })
         .catch((err) => {
@@ -211,19 +211,16 @@ export default {
       // console.log(styles, areas, statu, orders, prices);
       this.axios({
         method: "get",
-        url: "https://apis.netstart.cn/mbcomic/ClassPage",
+        //url: "https://apis.netstart.cn/mbcomic/ClassPage",
+        url: this.$api+"/search",
         params: {
           ...this.obj,
         },
       })
 
         .then((res) => {
-          console.log("获取分类筛选条件 res ==> ", res);
-          if (res.data.code === 0) {
-            this.imageData = res.data.data;
-            console.log(this.imageData);
-            console.log(this.obj);
-          }
+          console.log("获取筛选结果 res ==> ", res);
+          this.imageData = res.data;
         })
         .catch((err) => {
           console.log("获取分类筛选条件 err ==> ", err);

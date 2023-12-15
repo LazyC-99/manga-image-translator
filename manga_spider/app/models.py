@@ -18,3 +18,8 @@ class Manga(models.Model):
 class Genres(models.Model):
     name = models.CharField(max_length=50)
     trans_name = models.CharField(max_length=50)
+
+
+class Order(models.Model):
+    name = models.CharField(max_length=50)
+    trans_name = models.CharField(max_length=50)

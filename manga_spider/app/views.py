@@ -1,6 +1,6 @@
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
-from .models import Manga, Genres
+from .models import Manga, Genres, Order
 from . import spider_tool
 
 spider = spider_tool.MangaHubSpider()
@@ -13,11 +13,10 @@ def index(request):
 # 接收请求数据
 def search(request):
     request.encoding = 'utf-8'
-    if 'q' in request.GET and request.GET['q']:
-        query = request.GET['q']
-    else:
-        query = ' '
-    search_list = spider.search_manga(query)
+    order = request.GET.get('order', 'POPULAR')
+    genre = request.GET.get('genre', 'all')
+    query = request.GET.get('q', '')
+    search_list = spider.search_manga(order, genre, query)
     return JsonResponse(search_list, safe=False)
 
 
@@ -62,15 +61,28 @@ def get_chapters_img(request):
     return JsonResponse(chapters, safe=False)
 
 
-def genres(request):
+def classify(request):
     genres_list = Genres.objects.all()
-    result = []
+    order_list = Order.objects.all()
+    genres_result = []
+    order_result = []
     for genre in genres_list:
         item = {
             'name': genre.name,
             'trans_name': genre.trans_name
         }
-        result.append(item)
+        genres_result.append(item)
+
+    for order in order_list:
+        item = {
+            'name': order.name,
+            'trans_name': order.trans_name
+        }
+        order_result.append(item)
+    result = {
+        'genres': genres_result,
+        'orders': order_result
+    }
     return JsonResponse(result, safe=False)
 
 
