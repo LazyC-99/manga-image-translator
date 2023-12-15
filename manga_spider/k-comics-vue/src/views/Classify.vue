@@ -142,7 +142,7 @@ export default {
       ordersIndex: 0,
       areasIndex: 0,
       obj: {
-        genres: 'all',
+        genre: 'all',
         area_id: -1,
         is_finish: -1,
         order: 'POPULAR',
@@ -161,7 +161,7 @@ export default {
     },
     highlight1(index, styles) {
       this.currentIndex = index;
-      this.obj.style_id = styles;
+      this.obj.genre = styles;
       this.getClassify(styles);
     },
     highlight2(index, areas) {

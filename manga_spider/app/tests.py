@@ -4,6 +4,7 @@ from app.models import Genres, Order
 from app.spider_tool import MangaHubSpider
 import subprocess
 from googletrans import Translator
+from httpcore._exceptions import ReadTimeout
 
 
 def ImportGenres():
@@ -32,14 +33,29 @@ def ImportGenres():
         "POPULAR", "LATEST", "ALPHABET", "NEW", "COMPLETED"
     ]
     translator = Translator()
-
     Genres.objects.all().delete()
     for index, genre_name in enumerate(genres_list):
         genre_name = genre_name.replace(' ', '-')
-        # TODO 多线程翻译
-        translation = translator.translate(genre_name, dest='zh-cn').text
-        Genres.objects.create(id=index + 1, name=genre_name, trans_name=translation)
-        print(f'insert genres:{index + 1}/{len(genres_list)}')
+
+        translation_attempt = 0
+        translation = None
+
+        while translation_attempt < 3:  # 最大重试次数
+            try:
+                # TODO 多线程翻译
+                translation = translator.translate(genre_name, dest='zh-cn')
+                translation = translation.text  # 获取翻译文本
+                break  # 如果成功翻译，跳出循环
+            except ReadTimeout as e:
+                print(f"请求超时: {e}")
+                translation_attempt += 1
+                # 在此处添加处理超时的代码，例如等待一段时间后重试
+
+        if translation is not None:
+            Genres.objects.create(id=index + 1, name=genre_name.lower(), trans_name=translation)
+            print(f'insert genres:{index + 1}/{len(genres_list)}')
+        else:
+            print(f'无法翻译 {genre_name}，已达到最大重试次数')
 
     Order.objects.all().delete()
     for index, order_name in enumerate(order_list):
