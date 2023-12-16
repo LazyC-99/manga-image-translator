@@ -1,10 +1,70 @@
 from django.test import TestCase
 
+from app.models import Genres, Order
 from app.spider_tool import MangaHubSpider
 import subprocess
+from googletrans import Translator
+from httpcore._exceptions import ReadTimeout
 
 
-class Translator(TestCase):
+def ImportGenres():
+    # 手动获取:https://mangahub.io/search
+    # xpath: //ul[@class='dropdown-menu dropdown-menu-right']//li//text()
+    genres_list = [
+        "Action", "Adventure", "Comedy", "Adult", "Drama", "Historical", "Martial Arts",
+        "Romance", "Ecchi", "Supernatural", "Webtoons", "Manhwa", "Fantasy", "Harem",
+        "Shounen", "Manhua", "Mature", "Seinen", "Sports", "School Life", "Smut",
+        "Mystery", "Psychological", "Shounen ai", "Slice of life", "Shoujo ai",
+        "Cooking", "Horror", "Tragedy", "Doujinshi", "Sci-Fi", "Yuri", "Yaoi", "Shoujo",
+        "Gender bender", "Josei", "Mecha", "Medical", "Magic", "4-Koma", "Music",
+        "Webtoon", "Isekai", "Game", "Award Winning", "Oneshot", "Demons", "Military",
+        "Police", "Super Power", "Food", "Kids", "Magical Girls", "Wuxia", "Superhero",
+        "Thriller", "Crime", "Philosophical", "Adaptation", "Full Color", "Crossdressing",
+        "Reincarnation", "Manga", "Cartoon", "Survival", "Comic", "English", "Harlequin",
+        "Time Travel", "Traditional Games", "Reverse Harem", "Animals", "Aliens", "Loli",
+        "Video Games", "Monsters", "Office Workers", "System", "Villainess", "Zombies",
+        "Vampires", "Violence", "Monster Girls", "Anthology", "Ghosts", "Delinquents",
+        "Post-Apocalyptic", "Xianxia", "Xuanhuan", "R-18", "Cultivation", "Rebirth",
+        "Gore", "Russian", "Samurai", "Ninja", "Revenge", "Cheat Systems", "Dungeons",
+        "Overpowered"
+    ]
+
+    order_list = [
+        "POPULAR", "LATEST", "ALPHABET", "NEW", "COMPLETED"
+    ]
+    translator = Translator()
+    Genres.objects.all().delete()
+    for index, genre_name in enumerate(genres_list):
+        genre_name = genre_name.replace(' ', '-')
+
+        translation_attempt = 0
+        translation = None
+
+        while translation_attempt < 3:  # 最大重试次数
+            try:
+                # TODO 多线程翻译
+                translation = translator.translate(genre_name, dest='zh-cn')
+                translation = translation.text  # 获取翻译文本
+                break  # 如果成功翻译，跳出循环
+            except ReadTimeout as e:
+                print(f"请求超时: {e}")
+                translation_attempt += 1
+                # 在此处添加处理超时的代码，例如等待一段时间后重试
+
+        if translation is not None:
+            Genres.objects.create(id=index + 1, name=genre_name.lower(), trans_name=translation)
+            print(f'insert genres:{index + 1}/{len(genres_list)}')
+        else:
+            print(f'无法翻译 {genre_name}，已达到最大重试次数')
+
+    Order.objects.all().delete()
+    for index, order_name in enumerate(order_list):
+        translation = translator.translate(order_name, dest='zh-cn').text
+        Order.objects.create(id=index + 1, name=order_name, trans_name=translation)
+        print(f'insert order:{index + 1}/{len(order_list)}')
+
+
+def CallTranslator():
     # 指定要执行的Python程序文件
     # python_program = "E:/workspace_py/hello.py"
     python_program = "manga_translator"
